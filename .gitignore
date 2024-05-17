@@ -1,3 +1,7 @@
+#Ignore test results and reports
+test-results/
+test/output/
+playwright-report/
 # Ignore node_modules directory
 node_modules/
 

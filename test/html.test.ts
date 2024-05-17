@@ -1,22 +1,32 @@
 import { test } from '@playwright/test';
-import { WebBrowser } from '../src/webView';
+import { WebView } from '../src/webView';
 
 const testCases = [
-  { url: 'example.com/' },
-  { url: 'practicetestautomation.com/practice-test-login/' },
   {
+    site: 'example',
+    url: 'example.com/'
+  },
+  {
+    site: 'practiceTest',
+    url: 'practicetestautomation.com/practice-test-login/'
+  },
+  {
+    site: 'practiceTest',
     url: 'practicetestautomation.com/practice-test-login/',
     scope: '#main-container'
   },
   {
+    site: 'practiceTest',
     url: 'practicetestautomation.com/practice-test-login/',
     scope: '#username'
-  },  
+  },
   {
+    site: 'katalonTest',
     url: 'katalon-test.s3.amazonaws.com/aut/html/form.html',
     scope: '#infoForm'
   },
   {
+    site: 'demoQA',
     url: 'demoqa.com/automation-practice-form/',
     scope: '.practice-form-wrapper'
   }
@@ -28,10 +38,16 @@ test.describe('generateHierarchy function', () => {
       ? `get scope '${testCase.scope}' of '${testCase.url}' `
       : `get url '${testCase.url}'`;
 
-    test(testName, async () => {
+    let testFile = testCase.scope ? `scope_${testCase.scope}_` : '';
+
+    testFile += `site_${testCase.site}.html`;
+
+    test(testName, async ({page}) => {
       const url = 'https://' + testCase.url;
-      const browser = new WebBrowser();
-      await browser.show(url, testCase.scope);
+      await page.goto(url);
+      const html = await page.content()
+      const web = new WebView(html, testCase.scope);
+      web.save(testFile);
     });
   });
 

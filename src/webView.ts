@@ -1,23 +1,17 @@
-import axios from 'axios';
+import Path from 'path';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { JSDOM } from 'jsdom';
 import { WebElement } from './webElement';
+import { expect } from '@playwright/test';
 
-export class WebBrowser {
-  readonly view = new WebView();
+// export class WebBrowser {
+//   readonly view = new WebView();
 
-  private data: any;
-
-  async show(url: any, root?: string) {
-    // Fetch the HTML content of the webpage
-    const response = await axios.get(url);
-
-    if (response.status === 200) {
-      this.data = response.data;
-      // Print the hierarchy starting from the root element
-      this.view.show(this.data, root);
-    }
-  }
-}
+//   async save(filename: string, html: string, root?: string) {
+//     // Print the hierarchy starting from the root element
+//     this.view.save(filename, html, root);
+//   }
+// }
 
 class WebDOM {
   private dom: JSDOM;
@@ -36,6 +30,11 @@ class WebDOM {
     this.root = this.getRoot(root);
   }
 
+  save(filePath: string): void {
+    const rootHTML = this.root.element.outerHTML;
+    writeFileSync(filePath, rootHTML, 'utf8');
+  }
+
   getElement(selector: string): WebElement {
     return new WebElement(this.root.element, selector);
   }
@@ -45,7 +44,7 @@ class WebDOM {
 
     if (selector)
       // define root with element found by selector
-      root = this.body.querySelector(selector) as HTMLElement;
+      root = this.body.querySelector(selector);
 
     // define root with Body element
     if (!root) root = this.body;
@@ -55,14 +54,30 @@ class WebDOM {
 }
 
 export class WebView {
-  async show(html: any, scope?: string) {
-    const dom = new WebDOM(html, scope);
+  readonly dom: WebDOM;
 
-    this.view(dom.root);
+  constructor(html: any, scope?: string) {
+    this.dom = new WebDOM(html, scope);
+
+    this.view(this.dom.root);
+  }
+
+  save(fileName: string, folder = "output"): void {
+    // Create folder if it doesn't exist
+    const folderPath = Path.join(process.cwd(), 'test', folder);
+    if (!existsSync(folderPath)) {
+      mkdirSync(folderPath);
+    }
+
+    const filePath = Path.join(folderPath, fileName);
+
+    this.dom.save(filePath);
+    // Optionally, assert that the file exists
+    expect(existsSync(filePath)).toBeTruthy();
   }
 
   // Function to recursively print the hierarchy
-  view(element: WebElement, indent: number = 0): void {
+  private view(element: WebElement, indent: number = 0): void {
     if (element.isTagValid) {
       const tab = ' '.repeat(indent);
 
