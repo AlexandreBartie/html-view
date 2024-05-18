@@ -39,11 +39,11 @@ const testCases = [
 
 const scopeTestCases = testCases.filter(testCase => testCase.run);
 
-test.describe('save HTML', () => {
+test.describe('view HTML', () => {
   scopeTestCases.forEach((testCase) => {
     const testName = testCase.scope
-      ? `get scope '${testCase.scope}' of '${testCase.url}' `
-      : `get url '${testCase.url}'`;
+      ? `view scope '${testCase.scope}' of '${testCase.url}' `
+      : `view url '${testCase.url}'`;
 
     let testFile = testCase.scope ? `scope_${testCase.scope}_` : '';
 
@@ -54,16 +54,21 @@ test.describe('save HTML', () => {
       await page.goto(url);
       const html = await page.content()
       const view = web.setView(html, testCase.scope);
-      // for (const element of view.elements) //.filter(element => element.type === 'INPUT'))
-      //   {
-      //     console.log('element:', element.get('id'));
-      //   } 
+      
+      // List of types to check
+      const types = ['text', 'password', 'email', 'radio', 'checkbox', 'submit']; // Add more types as needed
 
-      view.save(testFile);
+      for (const element of view.elements) {
+        if (types.includes(element.type)) {
+          console.log(`Element:`, element.txt);
+        }
+      }
+
+      //view.save(testFile);
     });
   });
 
-  test.skip('review get list using playwright', async ({ page }) => {
+  test.skip('refactor get list using playwright', async ({ page }) => {
     const url = 'https://practicetestautomation.com/practice-test-login/'; // 'chrome://version/'
 
     await page.goto(url);

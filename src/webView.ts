@@ -9,8 +9,28 @@ class WebElement {
 
   readonly data: dataElement;
 
+  get tag(): string {
+    return this.get('type');
+  }
+
   get type(): string {
     return this.get('type');
+  }
+
+  get id(): string {
+    return this.get('id');
+  }
+
+  get tagValue(): string {
+    return this.get('innerText');
+  }
+
+  get txt(): string {
+    let ref = this.id;
+    if (ref === undefined)
+      ref = this.tagValue;
+
+    return `${ref}[${this.type}]` ;
   }
 
   constructor(node: HTMLElement) {
@@ -30,8 +50,12 @@ class WebElement {
         data[attr.name] = attr.value;
     }
 
+    // if (node.nodeType == 'radio') {
+    //   console.log('here')
+    // }
+
     // Add the innerHTML to the JSON object
-    data['innerHTML'] = node.innerHTML;
+    data['innerText'] = node.innerText;
 
     return data;
   }
@@ -67,21 +91,11 @@ class WebView {
   // Function to recursively print the hierarchy
   private load(node: WebNode, indent: number = 0): void {
     if (node.isTagValid) {
-      const tab = ' '.repeat(indent);
 
-      
-      if (node.isTagInput) {
-        const element = new WebElement(node.node as HTMLElement);
-        this.elements.push(new WebElement(node.node as HTMLElement));
-      }
-
-      if (node.isTagShow) {
+      if (node.isTagShow)
         this.elements.add(node);
-      }
+  
 
-      // if (node.isTagInput) {
-      //   console.log(tab + ` <<< ${node.getLine()}`);
-      // }
     }
     for (const child of node.nodes) {
       this.load(child, indent + 1);
