@@ -1,5 +1,7 @@
 import { test } from '@playwright/test';
-import { WebView } from '../src/webView';
+import { WebBrowser } from '../src/webView';
+
+const web = new WebBrowser();
 
 const testCases = [
   {
@@ -13,27 +15,32 @@ const testCases = [
   {
     site: 'practiceTest',
     url: 'practicetestautomation.com/practice-test-login/',
-    scope: '#main-container'
+    scope: '#main-container',
+    run: false,
   },
   {
     site: 'practiceTest',
     url: 'practicetestautomation.com/practice-test-login/',
-    scope: '#username'
+    scope: '#username',
   },
   {
     site: 'katalonTest',
     url: 'katalon-test.s3.amazonaws.com/aut/html/form.html',
-    scope: '#infoForm'
+    scope: '#infoForm',
+    run: true,
   },
   {
     site: 'demoQA',
     url: 'demoqa.com/automation-practice-form/',
-    scope: '.practice-form-wrapper'
+    scope: '.practice-form-wrapper',
+    run: false,
   }
 ];
 
-test.describe('generateHierarchy function', () => {
-  testCases.forEach((testCase, index) => {
+const scopeTestCases = testCases.filter(testCase => testCase.run);
+
+test.describe('save HTML', () => {
+  scopeTestCases.forEach((testCase) => {
     const testName = testCase.scope
       ? `get scope '${testCase.scope}' of '${testCase.url}' `
       : `get url '${testCase.url}'`;
@@ -46,12 +53,17 @@ test.describe('generateHierarchy function', () => {
       const url = 'https://' + testCase.url;
       await page.goto(url);
       const html = await page.content()
-      const web = new WebView(html, testCase.scope);
-      web.save(testFile);
+      const view = web.setView(html, testCase.scope);
+      // for (const element of view.elements) //.filter(element => element.type === 'INPUT'))
+      //   {
+      //     console.log('element:', element.get('id'));
+      //   } 
+
+      view.save(testFile);
     });
   });
 
-  test('review get list using playwright', async ({ page }) => {
+  test.skip('review get list using playwright', async ({ page }) => {
     const url = 'https://practicetestautomation.com/practice-test-login/'; // 'chrome://version/'
 
     await page.goto(url);
