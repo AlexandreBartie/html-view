@@ -56,13 +56,13 @@ test.describe('view HTML', () => {
       const view = web.setView(html, testCase.scope);
       
       // List of types to check
-      const types = ['text', 'password', 'email', 'radio', 'checkbox', 'submit']; // Add more types as needed
+      const tags = ['form', 'input', 'select', 'textarea', 'button', 'span', 'option'];
+      const labels = ['label'];
 
-      for (const element of view.elements) {
-        if (types.includes(element.type)) {
-          console.log(`Element:`, element.txt);
-        }
-      }
+      const types = ['label', 'text', 'password', 'email', 'radio', 'checkbox', 'submit']; // Add more types as needed
+
+      view.elements.show(`List of Elements:`, tags);
+      view.elements.show(`List of Labels:`, labels);
 
       //view.save(testFile);
     });

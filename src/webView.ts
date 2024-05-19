@@ -1,17 +1,13 @@
 import Path from 'path';
 import { existsSync, mkdirSync } from 'fs';
-import { WebAttributes, WebDOM, WebNode } from './webNode';
+import { WebDOM, WebNode } from './webNode';
 import { expect } from '@playwright/test';
 
-type dataElement = Record<string, string>;
+type dataValue = string;
 
 class WebElement {
 
-  readonly data: dataElement;
-
-  get tag(): string {
-    return this.get('type');
-  }
+  readonly node: HTMLElement;
 
   get type(): string {
     return this.get('type');
@@ -21,43 +17,57 @@ class WebElement {
     return this.get('id');
   }
 
+  get for(): string {
+    return this.get('for');
+  }
+
+  get name(): string {
+    return this.get('name');
+  }
+
   get tagValue(): string {
-    return this.get('innerText');
+    if (this.node.textContent)
+      return this.node.textContent;
+    return 'null'
+  }
+
+  get tagName(): string {
+    return this.node.tagName.toLowerCase();
+  }
+
+  get tagHtml(): string {
+    return this.node.innerHTML;
+  }
+
+  get tagType(): string {
+    let type = '';
+
+    if (this.tagName)
+      type += `${this.tagName}`;
+
+    if (this.type)
+      type += `#${this.type}`;
+
+    return type;
+
   }
 
   get txt(): string {
     let ref = this.id;
     if (ref === undefined)
-      ref = this.tagValue;
+      ref = this.for;
+    if (ref === undefined)
+      ref = this.name;
 
-    return `${ref}[${this.type}]` ;
+    return `${ref}[${this.tagType}]${this.tagHtml}` ;
   }
 
   constructor(node: HTMLElement) {
-    this.data = this.parse(node);
+    this.node = node;
   }
 
-  get(name: string): string {
-    return this.data[name];
-  }
-
-  private parse(node: HTMLElement): dataElement {
-    // Initialize an empty object to hold the JSON representation
-    const data: Record<string, string> = {};
-
-    // Loop through all attributes of the element
-    for (let attr of node.attributes) {
-        data[attr.name] = attr.value;
-    }
-
-    // if (node.nodeType == 'radio') {
-    //   console.log('here')
-    // }
-
-    // Add the innerHTML to the JSON object
-    data['innerText'] = node.innerText;
-
-    return data;
+  get(name: string): dataValue {
+    return this.node.attributes.getNamedItem(name)?.value || '';
   }
 
 }
@@ -73,6 +83,20 @@ class WebElements extends Array<WebElement> {
     this.push(element);
     return element;
   }
+
+  show(title: string, tags: string[]) {
+    console.log('====================')
+    console.log(`\n${title}`)
+    console.log('====================')
+    for (const element of this) {
+      if (tags.includes(element.tagName)) {
+        console.log('==>', element.txt);
+      }
+    }
+
+  }
+
+
 
 }
 
