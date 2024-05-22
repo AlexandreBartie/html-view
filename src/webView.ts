@@ -1,5 +1,6 @@
 import Path from 'path';
-import { existsSync, mkdirSync } from 'fs';
+
+import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { WebDOM, WebNode } from './webNode';
 import { expect } from '@playwright/test';
 
@@ -59,7 +60,7 @@ class WebElement {
     if (ref === undefined)
       ref = this.name;
 
-    return `${ref}[${this.tagType}]${this.tagHtml}` ;
+    return `[${this.type}]${ref}//${this.tagHtml}` ;
   }
 
   constructor(node: HTMLElement) {
@@ -96,17 +97,19 @@ class WebElements extends Array<WebElement> {
 
   }
 
-
-
 }
 
 class WebView {
+
+  private browser: WebBrowser;
 
   private dom: WebDOM;
 
   readonly elements = new WebElements();
 
-  constructor(html: any, scope?: string) {
+  constructor(browser: WebBrowser, html: any, scope?: string) {
+    this.browser = browser;
+
     this.dom = new WebDOM(html, scope);
 
     this.load(this.dom.root);
@@ -118,23 +121,15 @@ class WebView {
 
       if (node.isTagShow)
         this.elements.add(node);
-  
-
     }
     for (const child of node.nodes) {
       this.load(child, indent + 1);
     }
   }
 
-  save(fileName: string, folder = 'output'): void {
-    // Create folder if it doesn't exist
-    const folderPath = Path.join(process.cwd(), 'test', folder);
-    if (!existsSync(folderPath)) {
-      mkdirSync(folderPath);
-    }
-
-    const filePath = Path.join(folderPath, fileName);
-
+  save(fileName: string): void {
+    const filePath = this.browser.getFilePath(fileName);
+    // Save HTML file
     this.dom.save(filePath);
     // Optionally, assert that the file exists
     expect(existsSync(filePath)).toBeTruthy();
@@ -154,16 +149,50 @@ class WebViews extends Array<WebView> {
   }
 
   add(html: any, scope?: string): WebView {
-    const view = new WebView(html, scope);
+    const view = new WebView(this.browser, html, scope);
     this.push(view);
     return view;
   }
 }
 
 export class WebBrowser {
-  readonly views = new WebViews(this);
+  
+  readonly views = new WebViews(this);     
+  
+  readonly folder: string;
+
+    // List of types to check
+    get tags() : string[] {
+      return ['form', 'input', 'select', 'textarea', 'button', 'span', 'option'];
+    }
+
+    get labels() : string[] { 
+      return ['label'];
+    }
+
+    get types() : string[] { 
+      return ['label', 'text', 'password', 'email', 'radio', 'checkbox', 'submit']; // Add more types as needed
+    }
+  constructor(folder: string) {
+    this.folder = Path.join(process.cwd(), 'test', folder);
+  }
+
+  setLoad(fileName: string): WebView {
+    const file = Path.join(this.folder, fileName);
+    const data = readFileSync(file, 'utf8');
+    return this.setView(data);
+  };
 
   setView(html: any, scope?: string): WebView {
     return this.views.add(html, scope);
   }
+
+  getFilePath(filename: string): string {
+    // Create folder if it doesn't exist
+    if (!existsSync(this.folder)) {
+      mkdirSync(this.folder);
+    }
+    return Path.join(this.folder, filename);
+  }
+
 }

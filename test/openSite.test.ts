@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 import { WebBrowser } from '../src/webView';
 
-const web = new WebBrowser();
+const web = new WebBrowser('sites');
 
 const testCases = [
   {
@@ -39,7 +39,7 @@ const testCases = [
 
 const scopeTestCases = testCases.filter(testCase => testCase.run);
 
-test.describe('view HTML', () => {
+test.describe('open site', () => {
   scopeTestCases.forEach((testCase) => {
     const testName = testCase.scope
       ? `view scope '${testCase.scope}' of '${testCase.url}' `
@@ -59,12 +59,12 @@ test.describe('view HTML', () => {
       const tags = ['form', 'input', 'select', 'textarea', 'button', 'span', 'option'];
       const labels = ['label'];
 
-      const types = ['label', 'text', 'password', 'email', 'radio', 'checkbox', 'submit']; // Add more types as needed
+     // 
 
       view.elements.show(`List of Elements:`, tags);
       view.elements.show(`List of Labels:`, labels);
 
-      //view.save(testFile);
+      view.save(testFile);
     });
   });
 
