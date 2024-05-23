@@ -3,109 +3,15 @@ import Path from 'path';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { WebDOM, WebNode } from './webNode';
 import { expect } from '@playwright/test';
+import { WebForm } from './webForm';
 
-type dataValue = string;
+export class WebView {
 
-class WebElement {
-
-  readonly node: HTMLElement;
-
-  get type(): string {
-    return this.get('type');
-  }
-
-  get id(): string {
-    return this.get('id');
-  }
-
-  get for(): string {
-    return this.get('for');
-  }
-
-  get name(): string {
-    return this.get('name');
-  }
-
-  get tagValue(): string {
-    if (this.node.textContent)
-      return this.node.textContent;
-    return 'null'
-  }
-
-  get tagName(): string {
-    return this.node.tagName.toLowerCase();
-  }
-
-  get tagHtml(): string {
-    return this.node.innerHTML;
-  }
-
-  get tagType(): string {
-    let type = '';
-
-    if (this.tagName)
-      type += `${this.tagName}`;
-
-    if (this.type)
-      type += `#${this.type}`;
-
-    return type;
-
-  }
-
-  get txt(): string {
-    let ref = this.id;
-    if (ref === undefined)
-      ref = this.for;
-    if (ref === undefined)
-      ref = this.name;
-
-    return `[${this.type}]${ref}//${this.tagHtml}` ;
-  }
-
-  constructor(node: HTMLElement) {
-    this.node = node;
-  }
-
-  get(name: string): dataValue {
-    return this.node.attributes.getNamedItem(name)?.value || '';
-  }
-
-}
-
-class WebElements extends Array<WebElement> {
-
-  get hasData(): boolean {
-    return this.length > 0;
-  }
-
-  add(node: WebNode): WebElement {
-    const element = new WebElement(node.node as HTMLElement);
-    this.push(element);
-    return element;
-  }
-
-  show(title: string, tags: string[]) {
-    console.log('====================')
-    console.log(`\n${title}`)
-    console.log('====================')
-    for (const element of this) {
-      if (tags.includes(element.tagName)) {
-        console.log('==>', element.txt);
-      }
-    }
-
-  }
-
-}
-
-class WebView {
-
-  private browser: WebBrowser;
+  readonly browser: WebBrowser;
 
   private dom: WebDOM;
 
-  readonly elements = new WebElements();
+  readonly form = new WebForm(this)
 
   constructor(browser: WebBrowser, html: any, scope?: string) {
     this.browser = browser;
@@ -113,6 +19,7 @@ class WebView {
     this.dom = new WebDOM(html, scope);
 
     this.load(this.dom.root);
+    this.form.setup();
   }
 
   // Function to recursively print the hierarchy
@@ -120,7 +27,7 @@ class WebView {
     if (node.isTagValid) {
 
       if (node.isTagShow)
-        this.elements.add(node);
+        this.form.elements.add(node);
     }
     for (const child of node.nodes) {
       this.load(child, indent + 1);

@@ -21,8 +21,8 @@ test.describe('load controls', () => {
     test(testFile, async ({}) => {
       const view = web.setLoad(testFile);
       
-      view.elements.show(`List of Elements:`, web.tags);
-      view.elements.show(`List of Labels:`, web.labels);
+      view.form.show(`List of Elements:`, web.tags);
+      view.form.show(`List of Labels:`, web.labels);
 
       view.save(testFile);
     });

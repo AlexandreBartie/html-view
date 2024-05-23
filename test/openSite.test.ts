@@ -61,8 +61,8 @@ test.describe('open site', () => {
 
      // 
 
-      view.elements.show(`List of Elements:`, tags);
-      view.elements.show(`List of Labels:`, labels);
+      view.form.elements.show(`List of Elements:`, tags);
+      view.form.elements.show(`List of Labels:`, labels);
 
       view.save(testFile);
     });
