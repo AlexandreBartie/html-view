@@ -7,7 +7,7 @@ test.describe('load controls', () => {
 
   const testCases = [
     {
-      file: 'radio',
+      control: 'radiolist',
       run: true,
     },
   ];
@@ -16,15 +16,11 @@ test.describe('load controls', () => {
 
   scopeTestCases.forEach((testCase) => {
 
-    let testFile = testCase.file + '.html';
+    let testFile = testCase.control + '.html';
 
     test(testFile, async ({}) => {
-      const view = web.setLoad(testFile);
-      
-      view.form.show(`List of Elements:`, web.tags);
-      view.form.show(`List of Labels:`, web.labels);
-
-      view.save(testFile);
+      const view = web.setLoad(testFile);   
+      view.form.show(`List of Elements:`);
     });
   });
 

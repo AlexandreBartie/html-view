@@ -2,41 +2,99 @@ import { WebNode } from "./webNode";
 
 type dataValue = string;
 
-export class WebElement {
+class WebSelector {
 
-  readonly node: HTMLElement;
+  protected node: HTMLElement;
+
+  protected get parent() : HTMLElement | null {
+    return this.node.parentElement
+  }
+ 
+  get id(): string {
+    return this.node.id;
+  }
+
+  get className(): string {
+    return this.node.className;
+  }
+
+  get tagName(): string {
+    return this.node.tagName.toLowerCase();
+  }  
+
+  getSelector(): string {
+  
+    let selector = this.tagName;
+  
+    if (this.id) {
+      selector += `#${this.id}`;
+      return selector;
+    }
+  
+    if (this.className) {
+      const classList = this.className.split(/\s+/).filter(Boolean);
+      if (classList.length > 0) {
+        selector += `.${classList.join('.')}`;
+      }
+    }
+  
+    const attributes = Array.from(this.node.attributes).filter(attr => attr.name !== 'id' && attr.name !== 'class');
+    if (attributes.length > 0) {
+      attributes.forEach(attr => {
+        selector += `[${attr.name}="${attr.value}"]`;
+      });
+    }
+  
+    return selector;
+  }
+
+  constructor(node: HTMLElement) {
+    this.node = node;
+  }
+
+}
+
+export class WebElement extends WebSelector {
 
   get type(): string {
     return this.get('type');
-  }
-
-  get id(): string {
-    return this.get('id');
-  }
-
-  get for(): string {
-    return this.get('for');
   }
 
   get name(): string {
     return this.get('name');
   }
 
-  get tagValue(): string {
+  get for(): string {
+    return this.get('for');
+  }
+
+  get log(): string {
+    let ref = this.id;
+    if (ref === undefined)
+      ref = this.for;
+    if (ref === undefined)
+      ref = this.name;
+
+    return `[${this.type}]${ref}//${this.getHtml()}` ;
+  }
+
+  getValue(): string {
     if (this.node.textContent)
       return this.node.textContent;
     return 'null'
   }
 
-  get tagName(): string {
-    return this.node.tagName.toLowerCase();
+  getLabel(): string {
+    if (this.parent?.textContent)
+      return this.parent.textContent.trim();
+    return 'null'
   }
 
-  get tagHtml(): string {
+  getHtml(): string {
     return this.node.innerHTML;
   }
 
-  get tagType(): string {
+  getType(): string {
     let type = '';
 
     if (this.tagName)
@@ -49,26 +107,12 @@ export class WebElement {
 
   }
 
-  get txt(): string {
-    let ref = this.id;
-    if (ref === undefined)
-      ref = this.for;
-    if (ref === undefined)
-      ref = this.name;
-
-    return `[${this.type}]${ref}//${this.tagHtml}` ;
-  }
-
-  constructor(node: HTMLElement) {
-    this.node = node;
+  get(name: string): dataValue {
+    return this.node.attributes.getNamedItem(name)?.value || '';
   }
 
   match(key: string): boolean {
     return this.name === key;
-  }
-
-  get(name: string): dataValue {
-    return this.node.attributes.getNamedItem(name)?.value || '';
   }
 
 }
@@ -91,7 +135,7 @@ export class WebElements extends Array<WebElement> {
     console.log('====================')
     for (const element of this) {
       if (tags.includes(element.tagName)) {
-        console.log('==>', element.txt);
+        console.log('==>', element.log);
       }
     }
 

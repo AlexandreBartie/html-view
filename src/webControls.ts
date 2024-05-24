@@ -2,7 +2,6 @@ import { Collection } from './webCollection';
 import { DataOptions } from './webData';
 import { WebElement } from './webElements';
 
-
 export enum elementType {
   LabelBox = 'LabelBox',
   TextBox = 'TextBox',
@@ -13,21 +12,31 @@ export enum elementType {
   CheckList = 'CheckList',
   Button = 'Button',
   Link = 'Link',
-  Toggle = 'Toggle',    
+  Toggle = 'Toggle',
   Notice = 'Notice'
 }
 
 export class WebControls extends Collection<WebControl> {
-
   add(element: WebElement) {
     let control = this.findBy((item) => item.match(element));
     // Add a new control if it does not exist
     if (control === null) {
-      this.setElement(element);
+      control = this.setElement(element);
+    }
+    this.addOptions(control, element);
+  }
+
+  private addOptions(control: WebControl, element: WebElement) {
+    switch (element.type) {
+      case elementType.RadioList:
+        let radioList = control as unknown as WebRadioList;
+        const value = element.getLabel();
+        const selector = element.getSelector();
+        radioList.addItem(value, value, selector);
     }
   }
 
-  private setElement(element: WebElement) {
+  private setElement(element: WebElement) : WebControl  {
     switch (element.type) {
       // case elementType.LabelBox:
       //   return this.setWebControl<WebLabelBox>(
@@ -56,10 +65,7 @@ export class WebControls extends Collection<WebControl> {
       //   return this.setWebControl<WebListBox>(type, name, selector, WebListBox);
 
       case elementType.RadioList:
-        return this.setWebControl<WebRadioList>(
-          element,
-          WebRadioList
-        );
+        return this.setWebControl<WebRadioList>(element, WebRadioList);
       // case elementType.CheckList:
       //   return this.setWebControl<WebCheckList>(
       //     type,
@@ -82,77 +88,82 @@ export class WebControls extends Collection<WebControl> {
 
   private setWebControl<T extends WebControl>(
     element: WebElement,
-    webControl: new (
-      element: WebElement
-    ) => T
+    webControl: new (element: WebElement) => T
   ): T {
     const newElement = new webControl(element);
     this.push(newElement);
     return newElement;
   }
-
 }
 
-
 export class WebControl {
-
   readonly element: WebElement;
+
+  get log(): string {
+    return this.element.log;
+  }
 
   constructor(element: WebElement) {
     this.element = element;
   }
 
   match(element: WebElement): boolean {
-    return this.element.match(element.name)
+    return this.element.match(element.name);
   }
 
 }
 
-
-class WebSelect extends WebControl {
-
+export class WebSelect extends WebControl {
   readonly domain = new DataOptions();
-  
+
+  get log(): string {
+    return `[${this.element.getType()}] ${this.element.name}: { ${this.options} }`
+  }
+
+  get options(): string {
+    return this.domain.show('value');
+  }
+
   addItem(value: string, alias?: string, selector?: string) {
     this.domain.add(value, alias, selector);
   }
+
 }
 
 export class WebRadioList extends WebSelect {
-  // async select(key: string) {
-  //   if (key !== null) {
-  //     let item = this.domain.get(key);
-  //     if (item !== null) {
-  //       let selector = this.getPathSelector(
-  //         `text=${item.value}`,
-  //         item.selector
-  //       );
-  //       await this.web.find(selector).check();
-  //     }
-  //   }
-  // }
+// async select(key: string) {
+//   if (key !== null) {
+//     let item = this.domain.get(key);
+//     if (item !== null) {
+//       let selector = this.getPathSelector(
+//         `text=${item.value}`,
+//         item.selector
+//       );
+//       await this.web.find(selector).check();
+//     }
+//   }
+// }
 }
 
 export class WebListBox extends WebSelect {
-  // async select(list: string) {
-  //   if (list !== null) {
-  //     let itens = this.domain.getValues(list);
-
-  //     await this.web.find(this.selector).selectOption(itens);
-  //   }
-  // }
+// async select(list: string) {
+//   if (list !== null) {
+//     let itens = this.domain.getValues(list);
+//     await this.web.find(this.selector).selectOption(itens);
+//   }
+// }
 }
 
 export class WebCheckList extends WebSelect {
-  // async select(list: string) {
-  //   if (list !== null) {
-  //     for (let value of this.domain.getValues(list)) {
-  //       var selector = this.getPathSelector(
-  //         `text=${value}`,
-  //         'input[type="checkbox"]'
-  //       );
-  //       await this.web.find(selector).check();
-  //     }
-  //   }
-  // }
+// async select(list: string) {
+//   if (list !== null) {
+//     for (let value of this.domain.getValues(list)) {
+//       var selector = this.getPathSelector(
+//         `text=${value}`,
+//         'input[type="checkbox"]'
+//       );
+//       await this.web.find(selector).check();
+//     }
+//   }
+// }
 }

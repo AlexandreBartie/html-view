@@ -1,4 +1,4 @@
-import { WebControls, WebRadioList } from "./webControls";
+import { WebControls } from "./webControls";
 import { WebElements } from "./webElements";
 import { WebView } from "./webView";
  
@@ -19,25 +19,21 @@ export class WebForm {
   setup() {
     for (const element of this.elements)
       if (this.tags.includes(element.tagName))
+      {
         this.controls.add(element);
-  }
+      }
+
+    }
   
-  show(title: string, tags: string[]) {
+  show(title: string) {
     console.log('====================')
     console.log(`\n${title}`)
     console.log('====================')
     for (const control of this.controls) {
-      const element = control.element;
-      if (tags.includes(element.tagName)) {
-        console.log('==>', element.txt);
-      }
+      console.log('Control ==>', control.log);
     }
 
   }
-
-
-
-
 
 }
   
