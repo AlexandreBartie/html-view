@@ -52,6 +52,26 @@ class WebSelector {
     this.node = node;
   }
 
+  getKey(): string {
+    let key = this.tagName;
+    if (this.id) {
+        key += '#' + this.id;
+    }
+    if (this.className) {
+        key += '.' + this.className;
+    }
+    let siblingIndex = this.getSiblingIndex(this.node.previousElementSibling, this.tagName);
+    key += ':nth-of-type(' + siblingIndex + ')';
+    return key;
+}
+
+  getSiblingIndex(element: Element | null, tagName: string, index = 1): number {
+    if (!element || element.tagName !== tagName) {
+        return index;
+    }
+    return this.getSiblingIndex(element.previousElementSibling, tagName, index + 1);
+}  
+
 }
 
 export class WebElement extends WebSelector {
@@ -62,6 +82,10 @@ export class WebElement extends WebSelector {
 
   get name(): string {
     return this.get('name');
+  }
+
+  get value(): string {
+    return this.get('value');
   }
 
   get for(): string {
@@ -78,10 +102,18 @@ export class WebElement extends WebSelector {
     return `[${this.type}]${ref}//${this.getHtml()}` ;
   }
 
+  getKey(): string {
+    if (this.id)
+      return this.id;
+    return this.name;
+  }
+
   getValue(): string {
+    if (this.value)
+      return this.value
     if (this.node.textContent)
       return this.node.textContent;
-    return 'null'
+    return this.getLabel();
   }
 
   getLabel(): string {
@@ -90,9 +122,14 @@ export class WebElement extends WebSelector {
     return 'null'
   }
 
-  getHtml(): string {
-    return this.node.innerHTML;
+  getHtml() : string {
+    let clone = this.node.cloneNode(false) as HTMLElement;
+    return clone.outerHTML
   }
+
+  // getInnerHTML(): string {
+  //   return this.node.innerHTML;
+  // }
 
   getType(): string {
     let type = '';
@@ -105,6 +142,17 @@ export class WebElement extends WebSelector {
 
     return type;
 
+  }
+
+  findParentOptions(): HTMLElement | null {
+    let parent = this.parent;
+    while (parent) {
+      const label = parent.textContent?.trim();
+      if (label !== this.getLabel())
+        return parent
+      parent = parent.parentElement;
+    }
+    return null;
   }
 
   get(name: string): dataValue {
