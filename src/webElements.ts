@@ -2,12 +2,29 @@ import { WebNode } from "./webNode";
 
 type dataValue = string;
 
-class WebSelector {
+export enum elementType {
+  LabelBox = 'LabelBox',
+  TextBox = 'TextBox',
+  DataBox = 'DataBox',
+  ComboBox = 'ComboBox',
+  ListBox = 'ListBox',
+  RadioList = 'radio',
+  CheckList = 'checkbox',
+  Button = 'Button',
+  Link = 'Link',
+  Toggle = 'Toggle',
+  Notice = 'Notice'
+}
+
+class WebLocator {
 
   protected node: HTMLElement;
 
-  protected get parent() : HTMLElement | null {
-    return this.node.parentElement
+  get parent() : WebElement | null {
+    const parent = this.node.parentElement
+    if (parent)
+      return new WebElement(parent)
+    return null
   }
  
   get id(): string {
@@ -22,7 +39,15 @@ class WebSelector {
     return this.node.tagName.toLowerCase();
   }  
 
-  getSelector(): string {
+  get textContent(): string | null {
+    return this.node.textContent?.trim() ?? null;
+  }  
+
+  constructor(node: HTMLElement) {
+    this.node = node;
+  }
+
+  getSelector_2(): string {
   
     let selector = this.tagName;
   
@@ -48,11 +73,7 @@ class WebSelector {
     return selector;
   }
 
-  constructor(node: HTMLElement) {
-    this.node = node;
-  }
-
-  getKey(): string {
+  getSelector(): string {
     let key = this.tagName;
     if (this.id) {
         key += '#' + this.id;
@@ -65,24 +86,62 @@ class WebSelector {
     return key;
 }
 
-  getSiblingIndex(element: Element | null, tagName: string, index = 1): number {
+  private getSiblingIndex(element: Element | null, tagName: string, index = 1): number {
     if (!element || element.tagName !== tagName) {
         return index;
     }
     return this.getSiblingIndex(element.previousElementSibling, tagName, index + 1);
-}  
+  }  
 
 }
 
-export class WebElement extends WebSelector {
-
+export class WebGroup extends WebLocator {
+ 
   get type(): string {
     return this.get('type');
   }
 
+  get isGroup(): boolean {
+    return this.listGroup.includes(this.type);
+  }
+
+  private get listGroup(): string[] {
+    return [elementType.RadioList, elementType.CheckList];
+  }
+
+  get(name: string): dataValue {
+    return this.node.attributes.getNamedItem(name)?.value || '';
+  }
+
+}
+
+export class WebKey extends WebGroup {
+
   get name(): string {
     return this.get('name');
   }
+
+  get key(): string {
+    if ((!this.isGroup) && (this.id))
+      return this.id;
+    if (this.name)
+      return this.name;
+    return this.getSelector();
+  }
+  
+  get label(): string | null {
+    if (this.parent)
+      return this.parent.textContent;
+    return null
+  }
+
+  match(key: string): boolean {
+    return this.key === key;
+  }
+
+}
+
+export class WebElement extends WebKey {
 
   get value(): string {
     return this.get('value');
@@ -102,34 +161,24 @@ export class WebElement extends WebSelector {
     return `[${this.type}]${ref}//${this.getHtml()}` ;
   }
 
-  getKey(): string {
-    if (this.id)
-      return this.id;
-    return this.name;
-  }
-
   getValue(): string {
     if (this.value)
       return this.value
-    if (this.node.textContent)
-      return this.node.textContent;
-    return this.getLabel();
+    if (this.label)
+      return this.label;
+    return 'null';
   }
 
   getLabel(): string {
-    if (this.parent?.textContent)
-      return this.parent.textContent.trim();
-    return 'null'
+    if (this.label)
+      return this.label;
+    return 'null';
   }
 
   getHtml() : string {
     let clone = this.node.cloneNode(false) as HTMLElement;
     return clone.outerHTML
   }
-
-  // getInnerHTML(): string {
-  //   return this.node.innerHTML;
-  // }
 
   getType(): string {
     let type = '';
@@ -142,25 +191,6 @@ export class WebElement extends WebSelector {
 
     return type;
 
-  }
-
-  findParentOptions(): HTMLElement | null {
-    let parent = this.parent;
-    while (parent) {
-      const label = parent.textContent?.trim();
-      if (label !== this.getLabel())
-        return parent
-      parent = parent.parentElement;
-    }
-    return null;
-  }
-
-  get(name: string): dataValue {
-    return this.node.attributes.getNamedItem(name)?.value || '';
-  }
-
-  match(key: string): boolean {
-    return this.name === key;
   }
 
 }

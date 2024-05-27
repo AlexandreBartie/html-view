@@ -1,19 +1,30 @@
 import { Collection } from './webCollection';
 import { DataOptions } from './webData';
-import { WebElement } from './webElements';
+import { WebElement, elementType } from './webElements';
 
-export enum elementType {
-  LabelBox = 'LabelBox',
-  TextBox = 'TextBox',
-  DataBox = 'DataBox',
-  ComboBox = 'ComboBox',
-  ListBox = 'ListBox',
-  RadioList = 'radio',
-  CheckList = 'checkbox',
-  Button = 'Button',
-  Link = 'Link',
-  Toggle = 'Toggle',
-  Notice = 'Notice'
+export class WebControl {
+  readonly element: WebElement;
+
+  get key(): string {
+    return this.element.key;
+  }
+
+  get type(): string {
+    return this.element.type;
+  }
+
+  get log(): string {
+    return this.element.log;
+  }
+
+  constructor(element: WebElement) {
+    this.element = element;
+  }
+
+  match(element: WebElement): boolean {
+    return this.element.match(element.key);
+  }
+
 }
 
 export class WebControls extends Collection<WebControl> {
@@ -21,7 +32,10 @@ export class WebControls extends Collection<WebControl> {
     let control = this.findBy((item) => item.match(element));
     // Add a new control if it does not exist
     if (control === null) {
+      console.log('new control', element.key)
       control = this.setElement(element);
+    } else {
+      console.log('reused control', element.key)
     }
     this.addOptions(control, element);
   }
@@ -39,31 +53,6 @@ export class WebControls extends Collection<WebControl> {
 
   private setElement(element: WebElement) : WebControl  {
     switch (element.type) {
-      // case elementType.LabelBox:
-      //   return this.setWebControl<WebLabelBox>(
-      //     type,
-      //     name,
-      //     selector,
-      //     WebLabelBox
-      //   );
-      // case elementType.TextBox:
-      //   return this.setWebControl<WebLabelBox>(
-      //     type,
-      //     name,
-      //     selector,
-      //     WebTextBox
-      //   );
-      // case elementType.DataBox:
-      //   return this.setWebControl<WebDataBox>(type, name, selector, WebDataBox);
-      // case elementType.ComboBox:
-      //   return this.setWebControl<WebComboBox>(
-      //     type,
-      //     name,
-      //     selector,
-      //     WebComboBox
-      //   );
-      // case elementType.ListBox:
-      //   return this.setWebControl<WebListBox>(type, name, selector, WebListBox);
 
       case elementType.RadioList:
         return this.setWebControl<WebRadioList>(element, WebRadioList);
@@ -71,21 +60,6 @@ export class WebControls extends Collection<WebControl> {
         case elementType.CheckList:
           return this.setWebControl<WebCheckList>(element, WebCheckList);
 
-      // case elementType.CheckList:
-      //   return this.setWebControl<WebCheckList>(
-      //     type,
-      //     name,
-      //     selector,
-      //     WebCheckList
-      //   );
-      // case elementType.Button:
-      //   return this.setWebControl<WebButton>(type, name, selector, WebButton);
-      // case elementType.Link:
-      //   return this.setWebControl<WebLink>(type, name, selector, WebLink);
-      // case elementType.Toggle:
-      //   return this.setWebControl<WebToggle>(type, name, selector, WebLink);
-      // case elementType.Notice:
-      //   return this.setWebControl<WebNotice>(type, name, selector, WebNotice);
       default:
         throw new Error('Invalid control type');
     }
@@ -100,51 +74,47 @@ export class WebControls extends Collection<WebControl> {
     return newElement;
   }
 }
-
-export class WebControl {
-  readonly element: WebElement;
-
-  get key(): string {
-    return this.element.getKey();
-  }
-
-  get type(): string {
-    return this.element.type;
-  }
-
-  get log(): string {
-    return this.element.log;
-  }
-
-  constructor(element: WebElement) {
-    this.element = element;
-  }
-
-  match(element: WebElement): boolean {
-    return this.element.match(element.name);
-  }
-
-}
-
 export class WebSelect extends WebControl {
+  readonly group: WebElement | null;
   readonly domain = new DataOptions();
 
+  get key(): string {
+    if (this.group)
+      return this.group?.key
+    return 'null';
+  }
+
   get log(): string {
-    return `[${this.element.getType()}] ${this.element.name}: { ${this.options} }`
+    return `key:${this.key}[${this.element.getType()}] ${this.element.name}: { ${this.options} }`
   }
 
   get options(): string {
     return this.domain.show('value');
   }
 
+  constructor(element: WebElement) {
+    super(element);
+    this.group = this.setGroupOptions();
+  }
+
   addItem(value: string, alias?: string, selector?: string) {
     if (this.key)
       console.log('ok')
     else{
-      const x = this.element.findParentOptions()?.textContent
-      console.log('no',x)
+      console.log('no')
     }
     this.domain.add(value, alias, selector);
+  }
+
+  setGroupOptions(): WebElement | null{
+    let group = this.element.parent;
+    while (group) {
+      const label = group.label;
+      if (label !== this.element.label)
+        return group;
+      group = group.parent;
+    }
+    return null;
   }
 
 }
@@ -158,5 +128,4 @@ export class WebCheckList extends WebSelect {
 
 export class WebListBox extends WebSelect {
 }
-
 
