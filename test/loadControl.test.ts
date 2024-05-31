@@ -8,7 +8,7 @@ test.describe('load controls', () => {
   const testCases = [
     {
       control: 'tag-radio',
-      run: false,
+      run: true,
     },
     {
       control: 'tag-checkbox',

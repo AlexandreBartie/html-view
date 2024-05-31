@@ -22,7 +22,18 @@ export class WebControl {
   }
 
   match(element: WebElement): boolean {
+    if (this.element.isGroup)
+      return this.matchGroup(element);
     return this.element.match(element.key);
+  }
+
+  private matchGroup(element: WebElement): boolean {
+    if ((element.parent) && (this.element.parent)) {
+      const a = this.element.parent.key 
+      const b = element.parent.key
+      return this.element.parent.match(element.parent.key);
+    }
+    return false;
   }
 
 }
