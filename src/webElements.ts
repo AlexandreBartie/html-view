@@ -13,7 +13,8 @@ export enum elementType {
   Button = 'Button',
   Link = 'Link',
   Toggle = 'Toggle',
-  Notice = 'Notice'
+  Notice = 'Notice',
+  Undefined = ''
 }
 
 class WebLocator {
@@ -27,6 +28,12 @@ class WebLocator {
     return null
   }
  
+  get parent_key(): string {
+    if (this.parent)
+      return this.parent.key
+    return ''
+  }
+
   get id(): string {
     return this.node.id;
   }
@@ -42,6 +49,11 @@ class WebLocator {
   get textContent(): string | null {
     return this.node.textContent?.trim() ?? null;
   }  
+
+  get html() : string {
+    let clone = this.node.cloneNode(false) as HTMLElement;
+    return clone.outerHTML
+  }
 
   constructor(node: HTMLElement) {
     this.node = node;
@@ -98,22 +110,66 @@ class WebLocator {
 export class WebGroup extends WebLocator {
  
   get type(): string {
-    return this.get('type');
+    return this.getVirtualType();
   }
 
-  get isGroup(): boolean {
-    return this.listGroup.includes(this.type);
-  }
-
-  private get listGroup(): string[] {
+  private get list(): string[] {
     return [elementType.RadioList, elementType.CheckList];
+  }
+
+  isTypeList(): boolean {
+    return this.list.includes(this.type);
+  }
+
+  isTypeSelect(): boolean {
+    return this.isTagSelect() || this.isTagOption() ;
+  }
+
+  isTagSelect(): boolean {
+    return (this.tagName === 'select');
+  }
+
+  isTagOption(): boolean {
+    return (this.tagName === 'option');
+  }
+
+  isOption(): boolean {
+    return this.isTypeList() || (this.tagName === 'option');
+  }
+
+  getOption(): string {
+    if (this.isOption())
+      return this.get('value');
+    return '';
   }
 
   get(name: string): dataValue {
     return this.node.attributes.getNamedItem(name)?.value || '';
   }
 
+  private getVirtualType(): string {
+    if (this.isTagSelect())
+        return this.getSelectBox();
+    if (this.isTagOption())
+      return this.getParentType();
+    return this.get('type')
+  }
+
+  private getSelectBox(): string {
+    if (this.get('multiple'))
+      return elementType.ListBox;
+    return elementType.ComboBox;
+  }
+
+  private getParentType(): string {
+    if (this.parent)
+      return this.parent.type;
+    return elementType.Undefined;
+  }
+
 }
+
+
 
 export class WebKey extends WebGroup {
 
@@ -122,14 +178,23 @@ export class WebKey extends WebGroup {
   }
 
   get key(): string {
-    if ((!this.isGroup) && (this.id))
+    if ((!this.isTypeList) && (this.id))
       return this.id;
     if (this.name)
       return this.name;
     return this.getSelector();
   }
   
+  get key_group(): string {
+    if (this.isOption())
+      return this.parent_key;
+    return this.key;
+  }
+
+
   get label(): string | null {
+    if (this.textContent)
+      return this.textContent;
     if (this.parent)
       return this.parent.textContent;
     return null
@@ -140,6 +205,7 @@ export class WebKey extends WebGroup {
   }
 
 }
+
 
 export class WebElement extends WebKey {
 
@@ -158,7 +224,7 @@ export class WebElement extends WebKey {
     if (ref === undefined)
       ref = this.name;
 
-    return `[${this.type}]${ref}//${this.getHtml()}` ;
+    return `[${this.type}]${ref}//${this.html}` ;
   }
 
   getValue(): string {
@@ -173,11 +239,6 @@ export class WebElement extends WebKey {
     if (this.label)
       return this.label;
     return 'null';
-  }
-
-  getHtml() : string {
-    let clone = this.node.cloneNode(false) as HTMLElement;
-    return clone.outerHTML
   }
 
   getType(): string {

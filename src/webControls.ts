@@ -22,16 +22,14 @@ export class WebControl {
   }
 
   match(element: WebElement): boolean {
-    if (this.element.isGroup)
-      return this.matchGroup(element);
-    return this.element.match(element.key);
+    if (this.element.isOption())
+      return this.matchParent(element);
+    return this.element.match(element.key_group);
   }
 
-  private matchGroup(element: WebElement): boolean {
+  private matchParent(element: WebElement): boolean {
     if ((element.parent) && (this.element.parent)) {
-      const a = this.element.parent.key 
-      const b = element.parent.key
-      return this.element.parent.match(element.parent.key);
+      return this.element.parent.match(element.parent_key);
     }
     return false;
   }
@@ -43,22 +41,27 @@ export class WebControls extends Collection<WebControl> {
     let control = this.findBy((item) => item.match(element));
     // Add a new control if it does not exist
     if (control === null) {
-      console.log('new control', element.key)
+      console.log('======================================')
+      console.log('===> new-control: ', element.key_group)
+      console.log('======================================')
       control = this.setElement(element);
-    } else {
-      console.log('reused control', element.key)
     }
+    console.log('Element:', element.html)
     this.addOptions(control, element);
   }
 
   private addOptions(control: WebControl, element: WebElement) {
+    if (element.isTagSelect()) return;   
     const label = element.getLabel()
     const selector = element.getSelector()
     switch (element.type) {
+      case elementType.ComboBox:      
+      case elementType.ListBox:
       case elementType.RadioList:      
       case elementType.CheckList:
         let select = control as unknown as WebSelect;
-        select.addItem(label, label, selector);    
+        select.addItem(label, label, selector);
+        console.log('===> add option: ', label)    
     }
   }
 
@@ -70,6 +73,12 @@ export class WebControls extends Collection<WebControl> {
 
         case elementType.CheckList:
           return this.setWebControl<WebCheckList>(element, WebCheckList);
+
+        case elementType.ListBox:
+          return this.setWebControl<WebRadioList>(element, WebRadioList);
+  
+          case elementType.ComboBox:
+            return this.setWebControl<WebComboBox>(element, WebComboBox);
 
       default:
         throw new Error('Invalid control type');
@@ -96,7 +105,7 @@ export class WebSelect extends WebControl {
   }
 
   get log(): string {
-    return `key:${this.key}[${this.element.getType()}] ${this.element.name}: { ${this.options} }`
+    return `[${this.element.getType()}] ${this.element.name}: { ${this.options} }`
   }
 
   get options(): string {
@@ -109,11 +118,8 @@ export class WebSelect extends WebControl {
   }
 
   addItem(value: string, alias?: string, selector?: string) {
-    if (this.key)
-      console.log('ok')
-    else{
-      console.log('no')
-    }
+    if (!this.key)
+      console.log('no key')
     this.domain.add(value, alias, selector);
   }
 
@@ -140,3 +146,5 @@ export class WebCheckList extends WebSelect {
 export class WebListBox extends WebSelect {
 }
 
+export class WebComboBox extends WebSelect {
+}

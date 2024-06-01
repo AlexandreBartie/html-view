@@ -14,6 +14,11 @@ test.describe('load controls', () => {
       control: 'tag-checkbox',
       run: true,
     },
+    {
+      control: 'tag-select',
+      run: true,
+    },
+
   ];
   
   const scopeTestCases = testCases.filter(testCase => testCase.run);
@@ -24,7 +29,7 @@ test.describe('load controls', () => {
 
     test(testFile, async ({}) => {
       const view = web.setLoad(testFile);   
-      view.form.show(`List of Elements:`);
+      view.form.show(`List of Controls:`);
     });
   });
 
